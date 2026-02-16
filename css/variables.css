@@ -1,0 +1,65 @@
+/* CSS Variables: theme, spacing, layout primitives */
+:root {
+  /* Theme */
+  --color-bg: #0f172a;            /* page background */
+  --color-surface: #111827;       /* panels/cards */
+  --color-border: #334155;
+  --color-text: #e5e7eb;
+  --color-muted: #94a3b8;
+  --color-primary: #0f766e;       /* toolbar / accents */
+  --color-accent: #0ea5e9;        /* default task color */
+  --color-today: #1e3a8a;         /* highlight today */
+  --color-other-month: #1f2937;   /* month cells not in current month */
+  --color-hourline: #1f2937;      /* grid hour lines */
+
+  /* Elevation & Shape */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.25);
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+
+  /* Layout */
+  --toolbar-height: 52px;
+  --container-max: 1200px;
+
+  /* Calendar Grid */
+  --day-column-gap: 8px;
+  --week-header-height: 36px;
+  --hour-line-height: 52px;   /* per-hour vertical space in week view */
+  --hour-label-width: 56px;
+  --month-cell-min-h: 64px;
+
+  /* Task Blocks */
+  --task-padding: 8px;
+  --task-radius: 8px;
+  --task-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  --task-text: #ffffff;
+
+  /* Buttons */
+  --btn-bg: #0f766e;
+  --btn-bg-hover: #115e59;
+  --btn-text: #ffffff;
+  --btn-danger: #dc2626;
+  --btn-danger-hover: #b91c1c;
+
+  /* Z-index */
+  --z-toolbar: 10;
+  --z-modal: 100;
+  --z-task: 5;
+  --z-drag: 50;
+}
+
+/* Dark base */
+html, body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}

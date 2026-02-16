@@ -1,0 +1,124 @@
+/* Calendar styles: week and month views with gridlines */
+.week-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--day-column-gap);
+}
+
+.day-header {
+  padding: 8px;
+  text-align: center;
+  background: #0b1220;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+}
+.day-header.today {
+  background: var(--color-today);
+  color: #fff;
+}
+
+/* Week grid */
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--day-column-gap);
+}
+
+.day-column {
+  position: relative;
+  background: #0b1220;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.hour-grid {
+  position: relative;
+}
+
+.hour-line {
+  position: relative;
+  height: var(--hour-line-height);
+  border-top: 1px solid var(--color-hourline);
+  padding-left: calc(var(--hour-label-width) + var(--space-2));
+}
+.hour-line:first-child {
+  border-top: none;
+}
+.hour-label {
+  position: absolute;
+  left: var(--space-2);
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--hour-label-width);
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+/* Layer for tasks in week view */
+.tasks-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto; /* enable interaction with task blocks */
+}
+
+/* Month view */
+.month-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--day-column-gap);
+  margin-bottom: var(--space-2);
+}
+.month-dayname {
+  text-align: center;
+  color: var(--color-muted);
+  padding: 6px;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--day-column-gap);
+}
+
+.month-cell {
+  position: relative;
+  min-height: var(--month-cell-min-h);
+  background: #0b1220;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+}
+.month-cell.today {
+  outline: 2px solid var(--color-today);
+}
+.month-cell.other {
+  background: var(--color-other-month);
+  color: var(--color-muted);
+}
+
+.day-num {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.task-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  position: absolute;
+  bottom: 6px;
+  left: 8px;
+}
+.task-dots::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 10px 0 0 var(--color-primary), 20px 0 0 #8b5cf6;
+}

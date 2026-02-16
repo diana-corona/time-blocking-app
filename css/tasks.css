@@ -1,0 +1,88 @@
+/* Task blocks (week view) and indicators (month view) */
+.task-block {
+  position: absolute;
+  left: calc(var(--hour-label-width) + var(--space-2));
+  right: var(--space-2);
+  /* vertical position set inline via style.top */
+  /* height set inline based on duration */
+  z-index: var(--z-task); /* ensure above grid for clicks */
+  padding: var(--task-padding);
+  border-radius: var(--task-radius);
+  box-shadow: var(--task-shadow);
+  color: var(--task-text);
+  background: var(--color-accent);
+  border: 1px solid rgba(255,255,255,0.15);
+  pointer-events: auto; /* enable interaction */
+  touch-action: none;   /* better DnD on mobile */
+}
+
+.task-block.dragging {
+  opacity: 0.85;
+  transform: scale(1.02);
+  z-index: var(--z-drag);
+}
+
+.task-title {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.task-time {
+  font-size: 12px;
+  color: rgba(255,255,255,0.85);
+}
+
+/* Resize handles (optional for later) */
+.task-handle-top,
+.task-handle-bottom {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  height: 8px;
+  border-radius: 6px;
+  opacity: 0.0;
+}
+.task-handle-top { top: 0; }
+.task-handle-bottom { bottom: 0; }
+.task-block:hover .task-handle-top,
+.task-block:hover .task-handle-bottom {
+  opacity: 0.2;
+  background: rgba(255,255,255,0.3);
+}
+
+/* Month view dots for tasks already in calendar.css via .task-dots */
+
+/* Inline task controls */
+.task-controls {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+  z-index: var(--z-task);
+}
+
+.task-edit-btn,
+.task-delete-btn {
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  font-size: 12px;
+}
+
+.task-edit-btn:hover {
+  background: rgba(0,0,0,0.5);
+}
+
+.task-delete-btn {
+  background: var(--btn-danger);
+  border-color: var(--btn-danger);
+}
+.task-delete-btn:hover {
+  background: var(--btn-danger-hover);
+}

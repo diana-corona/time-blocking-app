@@ -1,0 +1,66 @@
+/* Responsive adjustments: mobile portrait/landscape, compact UI */
+@media (max-width: 480px) {
+  :root {
+    --toolbar-height: 48px;
+    --hour-line-height: 44px;
+    --hour-label-width: 48px;
+    --month-cell-min-h: 56px;
+  }
+
+  .toolbar {
+    gap: var(--space-2);
+    padding: 0 var(--space-2);
+  }
+  .nav-group input[type="date"] {
+    max-width: 140px;
+  }
+  .view-toggle button {
+    padding: 4px 8px;
+  }
+
+  .week-header .day-header {
+    font-size: 12px;
+    padding: 6px;
+  }
+  .hour-label {
+    font-size: 11px;
+  }
+  .task-title {
+    font-size: 13px;
+  }
+  .task-time {
+    font-size: 11px;
+  }
+
+  .modal-card {
+    max-width: 92vw;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 460px) {
+  :root {
+    --hour-line-height: 36px;
+    --hour-label-width: 42px;
+  }
+  main {
+    padding: var(--space-2);
+  }
+  .calendar {
+    padding: var(--space-2);
+    gap: var(--space-2);
+  }
+  .week-header .day-header {
+    padding: 4px;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --container-max: 1100px;
+    --hour-line-height: 56px;
+    --hour-label-width: 64px;
+  }
+  .modal-card {
+    max-width: 560px;
+  }
+}
