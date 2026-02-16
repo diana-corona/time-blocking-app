@@ -12,22 +12,36 @@
 const TASKS_KEY = "tb_tasks";
 const SETTINGS_KEY = "tb_settings";
 
+// In-memory fallback when localStorage is unavailable (e.g., some Android/PWA/private modes)
+const memoryStore = {};
+
 function readJSON(key, fallback) {
+  // Try persistent storage first
   try {
     const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    return JSON.parse(raw);
-  } catch {
-    return fallback;
+    if (raw != null) {
+      return JSON.parse(raw);
+    }
+  } catch (e) {
+    console.warn("TimeBlocking: failed to read from localStorage, using in-memory store", e);
   }
+
+  // Fallback to in-memory mirror if present
+  if (Object.prototype.hasOwnProperty.call(memoryStore, key)) {
+    return memoryStore[key];
+  }
+
+  return fallback;
 }
 
 function writeJSON(key, value) {
+  // Always update in-memory mirror so the current session keeps working
+  memoryStore[key] = value;
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (e) {
-    // Gracefully handle environments where localStorage is unavailable or blocked (e.g., some mobile/PWA/private modes)
-    console.warn("TimeBlocking: failed to write to localStorage", e);
+    // Gracefully handle environments where localStorage is unavailable or blocked
+    console.warn("TimeBlocking: failed to write to localStorage, using in-memory store only", e);
   }
 }
 
