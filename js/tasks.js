@@ -99,39 +99,14 @@ function createTaskBlock(task, dayColumnEl, pxPerMin) {
   block.appendChild(title);
   block.appendChild(time);
 
-  // Inline edit/delete controls
-  const controls = document.createElement("div");
-  controls.className = "task-controls";
-  const editBtn = document.createElement("button");
-  editBtn.type = "button";
-  editBtn.className = "task-edit-btn";
-  editBtn.textContent = "Edit";
-  const delBtn = document.createElement("button");
-  delBtn.type = "button";
-  delBtn.className = "task-delete-btn";
-  delBtn.textContent = "Delete";
-  controls.appendChild(editBtn);
-  controls.appendChild(delBtn);
-  block.appendChild(controls);
-
+  // Enable drag within calendar column
   enableDrag(block, dayColumnEl, task, pxPerMin);
 
-  editBtn.addEventListener("click", (e) => {
+  // Open details on double-click in calendar view
+  block.addEventListener("dblclick", (e) => {
     e.stopPropagation();
-    e.preventDefault();
     openEditModal(task);
   });
-  delBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    deleteTask(task.id);
-    const baseDateISO = qs("datePicker").value;
-    const baseDate = fromISODate(baseDateISO);
-    renderWeekTasks(baseDate);
-    renderMonthDots(baseDate);
-    rescheduleTimer();
-  });
-
 
   return block;
 }
@@ -352,10 +327,9 @@ function enableDrag(block, dayColumnEl, task, pxPerMin) {
     window.removeEventListener("touchmove", onPointerMove);
     window.removeEventListener("touchend", onPointerUp);
 
-    // If no movement, treat as click to edit (avoid re-render race)
+    // If no movement, just reset; double-click opens details
     if (!moved) {
       block.classList.remove("dragging");
-      openEditModal(task);
       return;
     }
 
@@ -386,12 +360,6 @@ function enableDrag(block, dayColumnEl, task, pxPerMin) {
 
   block.addEventListener("pointerdown", onPointerDown, { passive: false });
   block.addEventListener("touchstart", onPointerDown, { passive: false });
-
-  // Fallback: open edit on click when not dragging
-  block.addEventListener("click", (e) => {
-    if (e.target.closest(".task-controls")) return; // buttons already handled
-    if (!dragging) openEditModal(task);
-  });
 }
 
 export function wireNewTaskModalHandlers() {
