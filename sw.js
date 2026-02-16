@@ -1,5 +1,5 @@
 /* Service Worker: offline cache + notification click handling */
-const CACHE_NAME = "tb-cache-v3";
+const CACHE_NAME = "tb-cache-v4"; // bump to force clients (incl. Android PWA) to fetch latest assets
 const CORE_ASSETS = [
   "./",
   "./index.html",

@@ -2,7 +2,12 @@
 // Uses localStorage 'silent' flag set by app.js
 
 function isSilent() {
-  return localStorage.getItem("silent") === "true";
+  try {
+    return localStorage.getItem("silent") === "true";
+  } catch (e) {
+    console.warn("TimeBlocking: unable to read silent flag from localStorage, assuming not silent", e);
+    return false;
+  }
 }
 
 function canSpeak() {

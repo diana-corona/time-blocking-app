@@ -59,13 +59,22 @@ function initUI() {
     render();
   });
 
-  // Silent toggle persisted in localStorage
-  const savedSilent = localStorage.getItem("silent") === "true";
+  // Silent toggle persisted in localStorage (Android/private-mode safe)
+  let savedSilent = false;
+  try {
+    savedSilent = localStorage.getItem("silent") === "true";
+  } catch (e) {
+    console.warn("TimeBlocking: unable to read silent flag from localStorage, defaulting to false", e);
+  }
   state.silent = savedSilent;
   silentToggle.checked = savedSilent;
   silentToggle.addEventListener("change", (e) => {
     state.silent = !!e.target.checked;
-    localStorage.setItem("silent", String(state.silent));
+    try {
+      localStorage.setItem("silent", String(state.silent));
+    } catch (err) {
+      console.warn("TimeBlocking: unable to persist silent flag to localStorage", err);
+    }
   });
 
   // Modal open
