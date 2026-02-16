@@ -39,6 +39,7 @@ function initUI() {
   const datePicker = qs("datePicker");
   const prevBtn = qs("prevBtn");
   const nextBtn = qs("nextBtn");
+  const todayBtn = qs("todayBtn");
   const silentToggle = qs("silentToggle");
   const newTaskBtn = qs("newTaskBtn");
 
@@ -52,6 +53,7 @@ function initUI() {
   // Navigation
   prevBtn.addEventListener("click", () => navigate(-1));
   nextBtn.addEventListener("click", () => navigate(1));
+  todayBtn.addEventListener("click", goToToday);
   datePicker.addEventListener("change", (e) => {
     state.currentDateISO = e.target.value || todayISO();
     render();
@@ -111,6 +113,12 @@ function navigate(dir) {
     nextMonth.setMonth(nextMonth.getMonth() + dir);
     state.currentDateISO = toISODate(nextMonth);
   }
+  qs("datePicker").value = state.currentDateISO;
+  render();
+}
+
+function goToToday() {
+  state.currentDateISO = todayISO();
   qs("datePicker").value = state.currentDateISO;
   render();
 }
