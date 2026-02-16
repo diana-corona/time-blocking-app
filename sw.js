@@ -1,5 +1,5 @@
 /* Service Worker: offline cache + notification click handling */
-const CACHE_NAME = "tb-cache-v2";
+const CACHE_NAME = "tb-cache-v3";
 const CORE_ASSETS = [
   "./",
   "./index.html",

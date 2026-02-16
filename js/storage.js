@@ -23,7 +23,12 @@ function readJSON(key, fallback) {
 }
 
 function writeJSON(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    // Gracefully handle environments where localStorage is unavailable or blocked (e.g., some mobile/PWA/private modes)
+    console.warn("TimeBlocking: failed to write to localStorage", e);
+  }
 }
 
 export function getSettings() {
