@@ -69,8 +69,12 @@ Requirements met: week/month views, drag-and-drop-ready layout, date picker, 12h
             </label>
           </div>
           <label>
-            Duration (minutes)
+            Duration
             <input id="taskDuration" type="number" min="1" step="5" value="30" required />
+            <select id="taskDurationUnit">
+              <option value="minutes" selected>min</option>
+              <option value="hours">hr</option>
+            </select>
           </label>
           <label>
             Color (optional)

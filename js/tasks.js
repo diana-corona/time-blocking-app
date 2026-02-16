@@ -19,6 +19,31 @@ function qs(id) {
   return document.getElementById(id);
 }
 
+function readDurationMinutesFromInputs() {
+  const inputEl = qs("taskDuration");
+  if (!inputEl) return NaN;
+  const raw = Number(inputEl.value);
+  const unitEl = qs("taskDurationUnit");
+  const unit = unitEl ? unitEl.value : "minutes";
+
+  if (!Number.isFinite(raw) || raw <= 0) return NaN;
+  return unit === "hours" ? raw * 60 : raw;
+}
+
+function setDurationInputsFromMinutes(totalMinutes) {
+  const inputEl = qs("taskDuration");
+  const unitEl = qs("taskDurationUnit");
+  if (!inputEl || !unitEl) return;
+
+  if (totalMinutes >= 60 && totalMinutes % 60 === 0) {
+    inputEl.value = totalMinutes / 60;
+    unitEl.value = "hours";
+  } else {
+    inputEl.value = totalMinutes;
+    unitEl.value = "minutes";
+  }
+}
+
 export function initTaskControlsDelegation() {
   // Delegate clicks for dynamically rendered task controls to ensure edit/delete work
   document.addEventListener("click", (e) => {
@@ -180,7 +205,7 @@ function openEditModal(task) {
   const hh = String(start.getHours()).padStart(2, "0");
   const mm = String(start.getMinutes()).padStart(2, "0");
   qs("taskStartTime").value = `${hh}:${mm}`;
-  qs("taskDuration").value = task.durationMin;
+  setDurationInputsFromMinutes(task.durationMin);
   qs("taskColor").value = task.color || "#0ea5e9";
 
   // Populate recurrence checkboxes
@@ -214,12 +239,17 @@ function openEditModal(task) {
       .filter((cb) => cb.checked)
       .map((cb) => Number(cb.dataset.day));
 
+    let durationMin = readDurationMinutesFromInputs();
+    if (!Number.isFinite(durationMin)) {
+      durationMin = getSettings().defaultDurationMin;
+    }
+
     const updated = updateTask({
       id,
       title,
       color: qs("taskColor").value,
       startISO: d.toISOString(),
-      durationMin: Number(qs("taskDuration").value),
+      durationMin,
       recurrenceDays,
     });
     close();
@@ -256,7 +286,10 @@ export function saveNewTaskFromModal() {
   const [hhStr, mmStr] = timeStr.split(":");
   const d = fromISODate(dateISO);
   d.setHours(Number(hhStr), Number(mmStr), 0, 0);
-  const durationMin = Number(qs("taskDuration").value) || getSettings().defaultDurationMin;
+  let durationMin = readDurationMinutesFromInputs();
+  if (!Number.isFinite(durationMin)) {
+    durationMin = getSettings().defaultDurationMin;
+  }
 
   // Collect recurrence selection
   const recBoxes = document.querySelectorAll(".recurrence-day");
