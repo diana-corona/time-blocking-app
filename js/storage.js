@@ -7,6 +7,7 @@
  //   startISO: string (YYYY-MM-DDTHH:mm:ss.sssZ),
  //   durationMin: number,
  //   recurrenceDays?: number[] // 0..6 (Sun..Sat)
+ //   exceptionDates?: string[] // ["YYYY-MM-DD", ...] dates where recurrence is skipped
  // }
 const TASKS_KEY = "tb_tasks";
 const SETTINGS_KEY = "tb_settings";
@@ -71,32 +72,45 @@ export function addTask(task) {
     startISO: task.startISO, // ISO string
     durationMin: Number(task.durationMin) || 30,
     recurrenceDays,
+    exceptionDates: Array.isArray(task.exceptionDates) ? [...task.exceptionDates] : [],
   };
   tasks.push(t);
   saveTasks(tasks);
   return t;
 }
 
-export function updateTask(task) {
+export function updateTask(patch) {
   const tasks = getTasks();
-  const idx = tasks.findIndex((t) => t.id === task.id);
-  if (idx !== -1) {
-    const recurrenceDays = Array.isArray(task.recurrenceDays)
-      ? task.recurrenceDays.map((n) => Number(n)).filter((n) => n >= 0 && n <= 6)
-      : tasks[idx].recurrenceDays;
+  const idx = tasks.findIndex((t) => t.id === patch.id);
+  if (idx === -1) return null;
 
-    tasks[idx] = {
-      ...tasks[idx],
-      title: task.title.trim(),
-      color: task.color || tasks[idx].color,
-      startISO: task.startISO,
-      durationMin: Number(task.durationMin) || tasks[idx].durationMin,
-      recurrenceDays,
-    };
-    saveTasks(tasks);
-    return tasks[idx];
-  }
-  return null;
+  const existing = tasks[idx];
+
+  const recurrenceDays = Array.isArray(patch.recurrenceDays)
+    ? patch.recurrenceDays.map((n) => Number(n)).filter((n) => n >= 0 && n <= 6)
+    : existing.recurrenceDays;
+
+  const updated = {
+    ...existing,
+    title:
+      typeof patch.title === "string"
+        ? patch.title.trim()
+        : existing.title,
+    color: patch.color || existing.color,
+    startISO: typeof patch.startISO === "string" ? patch.startISO : existing.startISO,
+    durationMin:
+      typeof patch.durationMin === "number"
+        ? (Number(patch.durationMin) || existing.durationMin)
+        : existing.durationMin,
+    recurrenceDays,
+    exceptionDates: Array.isArray(patch.exceptionDates)
+      ? patch.exceptionDates
+      : existing.exceptionDates || [],
+  };
+
+  tasks[idx] = updated;
+  saveTasks(tasks);
+  return updated;
 }
 
 export function deleteTask(id) {
@@ -122,10 +136,16 @@ export function tasksOnDay(dayDate) {
   day.setHours(0, 0, 0, 0);
   const dayEnd = new Date(dayDate);
   dayEnd.setHours(23, 59, 59, 999);
+  const dayKey = day.toISOString().slice(0, 10); // YYYY-MM-DD
 
-  const base = tasksInRange(day, dayEnd);
+  // Base tasks directly scheduled on this day, respecting exceptionDates on recurring tasks
+  const base = tasksInRange(day, dayEnd).filter((t) => {
+    if (!Array.isArray(t.exceptionDates)) return true;
+    return !t.exceptionDates.includes(dayKey);
+  });
 
-  // Expand recurring tasks occurring on this weekday (from start date onward)
+  // Expand recurring tasks occurring on this weekday (from start date onward),
+  // skipping any days explicitly listed in exceptionDates.
   const weekday = day.getDay();
   const recurrences = getTasks()
     .filter((t) => Array.isArray(t.recurrenceDays) && t.recurrenceDays.includes(weekday))
@@ -134,6 +154,10 @@ export function tasksOnDay(dayDate) {
       const startDate = new Date(t.startISO);
       startDate.setHours(0, 0, 0, 0);
       return startDate.getTime() <= day.getTime();
+    })
+    .filter((t) => {
+      if (!Array.isArray(t.exceptionDates)) return true;
+      return !t.exceptionDates.includes(dayKey);
     })
     .map((t) => {
       const original = new Date(t.startISO);

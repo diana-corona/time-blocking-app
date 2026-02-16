@@ -342,13 +342,61 @@ function enableDrag(block, dayColumnEl, task, pxPerMin) {
     const base = fromISODate(dateISO);
     base.setHours(0, 0, 0, 0);
     const newStart = addMinutes(base, minutes);
-    updateTask({
-      id: task.id,
-      title: task.title,
-      color: task.color,
-      startISO: newStart.toISOString(),
-      durationMin: task.durationMin,
-    });
+
+    const isRecurring = Array.isArray(task.recurrenceDays) && task.recurrenceDays.length > 0;
+
+    if (isRecurring) {
+      const originalDate = new Date(task.startISO);
+      originalDate.setHours(0, 0, 0, 0);
+
+      const targetDate = new Date(base);
+      targetDate.setHours(0, 0, 0, 0);
+
+      const sameDay = originalDate.getTime() === targetDate.getTime();
+
+      if (sameDay) {
+        // Same-day move of a recurring instance:
+        // 1) mark this date as an exception on the recurring task
+        // 2) create a one-off task at the new time
+        const dayKey = toISODate(originalDate); // YYYY-MM-DD
+        const existingExceptions = Array.isArray(task.exceptionDates)
+          ? [...task.exceptionDates]
+          : [];
+        if (!existingExceptions.includes(dayKey)) {
+          existingExceptions.push(dayKey);
+        }
+        updateTask({
+          id: task.id,
+          exceptionDates: existingExceptions,
+        });
+
+        addTask({
+          title: task.title,
+          color: task.color,
+          startISO: newStart.toISOString(),
+          durationMin: task.durationMin,
+          // no recurrenceDays => one-off instance
+        });
+      } else {
+        // Cross-day drag of a recurring task => clone only, keep series untouched
+        addTask({
+          title: task.title,
+          color: task.color,
+          startISO: newStart.toISOString(),
+          durationMin: task.durationMin,
+          // no recurrenceDays => one-off instance
+        });
+      }
+    } else {
+      // Non-recurring tasks are truly moved
+      updateTask({
+        id: task.id,
+        title: task.title,
+        color: task.color,
+        startISO: newStart.toISOString(),
+        durationMin: task.durationMin,
+      });
+    }
 
     // Refresh week/month rendering
     const baseDateISO = qs("datePicker").value;
