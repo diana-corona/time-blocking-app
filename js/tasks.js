@@ -127,12 +127,6 @@ function createTaskBlock(task, dayColumnEl, pxPerMin) {
   // Enable drag within calendar column
   enableDrag(block, dayColumnEl, task, pxPerMin);
 
-  // Open details on double-click in calendar view
-  block.addEventListener("dblclick", (e) => {
-    e.stopPropagation();
-    openEditModal(task);
-  });
-
   return block;
 }
 
@@ -360,9 +354,10 @@ function enableDrag(block, dayColumnEl, task, pxPerMin) {
     window.removeEventListener("touchmove", onPointerMove);
     window.removeEventListener("touchend", onPointerUp);
 
-    // If no movement, just reset; double-click opens details
+    // If no movement, treat as tap/click: open details (mobile-friendly)
     if (!moved) {
       block.classList.remove("dragging");
+      openEditModal(task);
       return;
     }
 
