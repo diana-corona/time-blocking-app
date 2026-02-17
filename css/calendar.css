@@ -64,6 +64,17 @@
   pointer-events: none;
 }
 
+.now-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.9);
+  pointer-events: none;
+  z-index: 2;
+}
+
 /* Month view */
 .month-header {
   display: grid;

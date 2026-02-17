@@ -19,6 +19,8 @@ const state = {
   silent: false,
 };
 
+let nowLineIntervalId = null;
+
 function qs(id) {
   return document.getElementById(id);
 }
@@ -105,6 +107,8 @@ function initUI() {
   // Accessibility hint for today highlight
   weekViewEl.setAttribute("aria-describedby", "today");
   monthViewEl.setAttribute("aria-describedby", "today");
+
+  startNowLineTimer();
 }
 
 function setView(view) {
@@ -161,6 +165,65 @@ function render() {
     renderMonth(baseDate);
     renderMonthDots(baseDate);
   }
+}
+
+function getPxPerMinute() {
+  const val = getComputedStyle(document.documentElement)
+    .getPropertyValue("--hour-line-height")
+    .trim();
+  const pxPerHour = Number.parseFloat(val || "52");
+  return pxPerHour / 60;
+}
+
+function minutesFromMidnight(date) {
+  return date.getHours() * 60 + date.getMinutes();
+}
+
+function updateNowLines() {
+  const container = qs("weekView");
+  if (!container) return;
+
+  const todayIso = todayISO();
+  const now = new Date();
+  const minutes = minutesFromMidnight(now);
+  const pxPerMin = getPxPerMinute();
+  const topPx = minutes * pxPerMin;
+
+  const columns = container.querySelectorAll(".day-column");
+  columns.forEach((col) => {
+    const dateISO = col.dataset.date;
+    let line = col.querySelector(".now-line");
+
+    if (dateISO !== todayIso || state.currentView !== "week") {
+      if (line) {
+        line.remove();
+      }
+      return;
+    }
+
+    if (!line) {
+      line = document.createElement("div");
+      line.className = "now-line";
+      col.appendChild(line);
+    }
+
+    line.style.top = `${topPx}px`;
+  });
+}
+
+function startNowLineTimer() {
+  if (nowLineIntervalId !== null) {
+    clearInterval(nowLineIntervalId);
+  }
+
+  const tick = () => {
+    if (state.currentView === "week") {
+      updateNowLines();
+    }
+  };
+
+  tick();
+  nowLineIntervalId = window.setInterval(tick, 60000);
 }
 
 // Render Week View with 7 columns and hourly gridlines
@@ -240,6 +303,8 @@ function renderWeek(baseDate) {
 
     gridRow.appendChild(col);
   });
+
+  updateNowLines();
 }
 
 // Render Month View with 6x7 grid
