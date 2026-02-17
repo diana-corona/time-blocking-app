@@ -13,6 +13,9 @@ import { initTimer } from "./timer.js";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+const PRODUCTIVE_START_HOUR = 5;
+const PRODUCTIVE_END_HOUR = 23;
+
 const state = {
   currentView: "week", // 'week' | 'month'
   currentDateISO: todayISO(),
@@ -185,16 +188,22 @@ function updateNowLines() {
 
   const todayIso = todayISO();
   const now = new Date();
-  const minutes = minutesFromMidnight(now);
+  const totalMinutes = minutesFromMidnight(now);
+  const startMin = PRODUCTIVE_START_HOUR * 60;
+  const endMin = PRODUCTIVE_END_HOUR * 60;
   const pxPerMin = getPxPerMinute();
-  const topPx = minutes * pxPerMin;
+  const minutesFromStart = totalMinutes - startMin;
+  const topPx = minutesFromStart * pxPerMin;
 
   const columns = container.querySelectorAll(".day-column");
   columns.forEach((col) => {
     const dateISO = col.dataset.date;
     let line = col.querySelector(".now-line");
 
-    if (dateISO !== todayIso || state.currentView !== "week") {
+    const outsideProductive =
+      totalMinutes < startMin || totalMinutes >= endMin;
+
+    if (dateISO !== todayIso || state.currentView !== "week" || outsideProductive) {
       if (line) {
         line.remove();
       }
@@ -262,7 +271,7 @@ function renderWeek(baseDate) {
 
     const hourGrid = document.createElement("div");
     hourGrid.className = "hour-grid";
-    for (let hour = 0; hour < 24; hour++) {
+    for (let hour = PRODUCTIVE_START_HOUR; hour < PRODUCTIVE_END_HOUR; hour++) {
       const line = document.createElement("div");
       line.className = "hour-line";
       const tm = new Date(d);

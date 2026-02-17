@@ -15,6 +15,10 @@ import {
 } from "./storage.js";
 import { rescheduleTimer } from "./timer.js";
 
+const PRODUCTIVE_START_HOUR = 5;
+const PRODUCTIVE_END_HOUR = 23;
+const PRODUCTIVE_SPAN_MIN = (PRODUCTIVE_END_HOUR - PRODUCTIVE_START_HOUR) * 60;
+
 function qs(id) {
   return document.getElementById(id);
 }
@@ -86,7 +90,7 @@ function getPxPerMinute() {
 function getDayColumnHeightPx() {
   const val = getComputedStyle(document.documentElement).getPropertyValue("--hour-line-height").trim();
   const pxPerHour = Number.parseFloat(val || "52");
-  return pxPerHour * 24;
+  return pxPerHour * (PRODUCTIVE_END_HOUR - PRODUCTIVE_START_HOUR);
 }
 
 function minutesFromMidnight(date) {
@@ -104,7 +108,13 @@ function taskTimeLabel(startDate, durationMin) {
 
 function createTaskBlock(task, dayColumnEl, pxPerMin) {
   const start = new Date(task.startISO);
-  const top = minutesFromMidnight(start) * pxPerMin;
+  const totalMinutes = minutesFromMidnight(start);
+  const offsetMinutes = totalMinutes - PRODUCTIVE_START_HOUR * 60;
+  const clampedOffset = Math.max(
+    0,
+    Math.min(offsetMinutes, PRODUCTIVE_SPAN_MIN - task.durationMin)
+  );
+  const top = clampedOffset * pxPerMin;
   const height = Math.max(24, task.durationMin * pxPerMin); // min height for touch
   const block = document.createElement("div");
   block.className = "task-block";
@@ -363,13 +373,17 @@ function enableDrag(block, dayColumnEl, task, pxPerMin) {
 
     block.classList.remove("dragging");
 
-    // Compute new start time from top
+    // Compute new start time from top (offset from productive-day start)
     const topPx = parseFloat(block.style.top);
-    const minutes = Math.round(topPx / pxPerMin / 5) * 5; // snap to 5-min
+    let minutesOffset = Math.round(topPx / pxPerMin / 5) * 5; // snap to 5-min
+    minutesOffset = Math.max(
+      0,
+      Math.min(minutesOffset, PRODUCTIVE_SPAN_MIN - task.durationMin)
+    );
     const dateISO = dayColumnEl.dataset.date;
     const base = fromISODate(dateISO);
     base.setHours(0, 0, 0, 0);
-    const newStart = addMinutes(base, minutes);
+    const newStart = addMinutes(base, PRODUCTIVE_START_HOUR * 60 + minutesOffset);
 
     const isRecurring = Array.isArray(task.recurrenceDays) && task.recurrenceDays.length > 0;
 
