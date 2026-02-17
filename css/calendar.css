@@ -60,7 +60,8 @@
 .tasks-layer {
   position: absolute;
   inset: 0;
-  pointer-events: auto; /* enable interaction with task blocks */
+  /* Let empty slots receive clicks; individual task blocks handle their own events */
+  pointer-events: none;
 }
 
 /* Month view */

@@ -209,6 +209,26 @@ function renderWeek(baseDate) {
       label.className = "hour-label";
       label.textContent = format12h(tm);
       line.appendChild(label);
+
+      // Open new-task modal for this time slot (desktop: dblclick, mobile: single tap)
+      const openForSlot = (e) => {
+        e.preventDefault();
+        const slot = line.dataset.time ? new Date(line.dataset.time) : new Date(d);
+        openTaskModal(slot);
+      };
+
+      const hasTouch =
+        ("ontouchstart" in window) ||
+        (navigator && typeof navigator.maxTouchPoints === "number" && navigator.maxTouchPoints > 0);
+
+      if (hasTouch) {
+        // Mobile/touch: single tap
+        line.addEventListener("click", openForSlot);
+      } else {
+        // Desktop: double-click
+        line.addEventListener("dblclick", openForSlot);
+      }
+
       hourGrid.appendChild(line);
     }
     col.appendChild(hourGrid);
@@ -269,18 +289,29 @@ function renderMonth(baseDate) {
   });
 }
 
-// Modal handlers (basic scaffolding)
-function openTaskModal() {
+ // Modal handlers (basic scaffolding)
+function openTaskModal(initialDate) {
   const modal = qs("taskModal");
   const form = qs("taskForm");
   const deleteBtn = qs("deleteTaskBtn");
   const closeBtn = qs("closeModalBtn");
 
+  // Determine initial date/time for new task
+  let base;
+  if (initialDate instanceof Date && !Number.isNaN(initialDate.getTime())) {
+    base = new Date(initialDate);
+  } else {
+    base = fromISODate(state.currentDateISO);
+    base.setHours(9, 0, 0, 0);
+  }
+
   // Defaults for new task
   qs("taskId").value = "";
   qs("taskTitle").value = "";
-  qs("taskStartDate").value = state.currentDateISO;
-  qs("taskStartTime").value = "09:00";
+  qs("taskStartDate").value = toISODate(base);
+  const hh = String(base.getHours()).padStart(2, "0");
+  const mm = String(base.getMinutes()).padStart(2, "0");
+  qs("taskStartTime").value = `${hh}:${mm}`;
   qs("taskDuration").value = 30;
   qs("taskColor").value = "#0ea5e9";
 
