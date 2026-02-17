@@ -1,0 +1,135 @@
+.task-progress-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.task-progress-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-4);
+}
+
+.task-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.task-progress-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.task-progress-end {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.task-progress-minimize-btn {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+}
+
+.task-progress-body {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-4);
+}
+
+.task-progress-chart {
+  flex: 0 0 auto;
+}
+
+.task-progress-chart canvas {
+  display: block;
+  width: 200px;
+  height: 200px;
+}
+
+.task-progress-info {
+  flex: 1 1 auto;
+  display: grid;
+  gap: var(--space-2);
+  align-content: flex-start;
+}
+
+.task-progress-remaining,
+.task-progress-elapsed {
+  font-size: 0.95rem;
+}
+
+.task-progress-next-title {
+  margin-top: var(--space-2);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.task-progress-next-time {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+/* Mini floating indicator */
+.task-progress-mini {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  cursor: pointer;
+  z-index: var(--z-toolbar);
+}
+
+.task-progress-mini canvas {
+  display: block;
+  width: 48px;
+  height: 48px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 600px) {
+  .task-progress-card {
+    max-width: 360px;
+    padding: var(--space-3);
+    flex-direction: column;
+  }
+
+  .task-progress-body {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .task-progress-chart canvas {
+    width: 160px;
+    height: 160px;
+  }
+
+  .task-progress-mini {
+    right: var(--space-3);
+    bottom: var(--space-3);
+  }
+}

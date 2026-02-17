@@ -163,6 +163,30 @@ function scheduleWarnings() {
   scheduled.push(setTimeout(scheduleWarnings, 60_000));
 }
 
+export function getActiveTaskInfo() {
+  const nowMs = Date.now();
+  const active = getActiveTask(nowMs);
+  return active
+    ? {
+        task: active.task,
+        startMs: active.startMs,
+        endMs: active.endMs,
+      }
+    : null;
+}
+
+export function getNextTaskInfo() {
+  const nowMs = Date.now();
+  const next = getNextTask(nowMs);
+  return next
+    ? {
+        task: next.task,
+        startMs: next.startMs,
+        endMs: next.endMs,
+      }
+    : null;
+}
+
 export async function initTimer() {
   if (initialized) return;
   initialized = true;

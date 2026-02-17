@@ -10,6 +10,7 @@ import {
 } from "./utils.js";
 import { renderWeekTasks, renderMonthDots, wireNewTaskModalHandlers, saveNewTaskFromModal, initTaskControlsDelegation } from "./tasks.js";
 import { initTimer } from "./timer.js";
+import { initTaskProgressView } from "./task-progress.js";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -400,4 +401,5 @@ document.addEventListener("DOMContentLoaded", () => {
   initUI();
   initTaskControlsDelegation();
   initTimer();
+  initTaskProgressView();
 });
