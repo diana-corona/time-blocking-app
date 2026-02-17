@@ -23,6 +23,17 @@ function qs(id) {
   return document.getElementById(id);
 }
 
+function isMobileDayView() {
+  try {
+    if (window.matchMedia) {
+      return window.matchMedia("(max-width: 480px)").matches;
+    }
+  } catch {
+    // ignore
+  }
+  return window.innerWidth <= 480;
+}
+
 function registerSW() {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker
@@ -84,6 +95,13 @@ function initUI() {
   updateViewButtons();
   render();
 
+  // Re-render on resize/orientation changes so mobile daily vs week view stays in sync
+  window.addEventListener("resize", () => {
+    if (state.currentView === "week") {
+      render();
+    }
+  });
+
   // Accessibility hint for today highlight
   weekViewEl.setAttribute("aria-describedby", "today");
   monthViewEl.setAttribute("aria-describedby", "today");
@@ -115,7 +133,9 @@ function navigate(dir) {
   // dir: -1 or 1
   const base = fromISODate(state.currentDateISO);
   if (state.currentView === "week") {
-    const nextDate = addDays(base, dir * 7);
+    // On narrow mobile screens, move by 1 day; otherwise, move by full week
+    const step = isMobileDayView() ? 1 : 7;
+    const nextDate = addDays(base, dir * step);
     state.currentDateISO = toISODate(nextDate);
   } else {
     const nextMonth = new Date(base);
@@ -148,7 +168,8 @@ function renderWeek(baseDate) {
   const container = qs("weekView");
   container.innerHTML = "";
 
-  const days = getWeekDays(baseDate, 0);
+  // On mobile, render a single-day "daily" view; on larger screens, render full week
+  const days = isMobileDayView() ? [baseDate] : getWeekDays(baseDate, 0);
   const today = new Date();
 
   const headerRow = document.createElement("div");
