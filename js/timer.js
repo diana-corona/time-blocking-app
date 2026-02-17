@@ -117,15 +117,15 @@ function scheduleWarnings() {
     }
   }
 
-  // Next task: 1-minute warning before it starts
+  // Next task: 5-minute warning before it starts
   const next = getNextTask(nowMs);
   if (next) {
-    const oneMinWarnAt = next.startMs - 60_000;
-    if (oneMinWarnAt > nowMs) {
-      scheduleAt(oneMinWarnAt, () => {
+    const fiveMinWarnAt = next.startMs - 5 * 60_000;
+    if (fiveMinWarnAt > nowMs) {
+      scheduleAt(fiveMinWarnAt, () => {
         const startText = new Date(next.startMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         const title = "Upcoming task";
-        const body = `${next.task.title} starts in 1 minute (${startText}).`;
+        const body = `${next.task.title} starts in 5 minutes (${startText}).`;
         chime();
         say(body);
         notify(title, body);
