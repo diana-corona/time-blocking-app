@@ -65,18 +65,15 @@ export function initTaskControlsDelegation() {
 
     if (editEl) {
       e.preventDefault();
-      openEditModal(task);
+      const instanceDateKey = block.dataset.instanceDate || "";
+      openEditModal(task, instanceDateKey);
       return;
     }
 
     if (delEl) {
       e.preventDefault();
-      deleteTask(id);
-      const baseDateISO = qs("datePicker").value;
-      const baseDate = fromISODate(baseDateISO);
-      renderWeekTasks(baseDate);
-      renderMonthDots(baseDate);
-      rescheduleTimer();
+      const instanceDateKey = block.dataset.instanceDate || "";
+      handleDeleteTask(task, instanceDateKey);
     }
   });
 }
@@ -155,6 +152,7 @@ function createTaskBlock(task, dayColumnEl, pxPerMin, layoutInfo) {
   block.style.height = `${height}px`;
   block.style.background = task.color || "var(--color-accent)";
   block.dataset.id = task.id;
+  block.dataset.instanceDate = toISODate(start);
 
   // If this task shares an hour with others, lay them out side-by-side
   if (layoutInfo && layoutInfo.total > 1) {
@@ -190,6 +188,51 @@ function createTaskBlock(task, dayColumnEl, pxPerMin, layoutInfo) {
   enableDrag(block, dayColumnEl, task, pxPerMin);
 
   return block;
+}
+
+function handleDeleteTask(task, instanceDateKey) {
+  const isRecurring =
+    Array.isArray(task.recurrenceDays) && task.recurrenceDays.length > 0;
+
+  if (!isRecurring) {
+    const confirmed = window.confirm("Delete this task?");
+    if (!confirmed) return;
+    deleteTask(task.id);
+  } else {
+    const deleteInstance = window.confirm(
+      "Delete only this instance?\n\nPress OK to delete only this occurrence.\nPress Cancel to delete the entire series."
+    );
+    if (deleteInstance) {
+      const dayKey =
+        instanceDateKey || toISODate(new Date(task.startISO));
+      const allTasks = getTasks();
+      const baseTask = allTasks.find((t) => t.id === task.id);
+      if (baseTask) {
+        const existingExceptions = Array.isArray(baseTask.exceptionDates)
+          ? [...baseTask.exceptionDates]
+          : [];
+        if (!existingExceptions.includes(dayKey)) {
+          existingExceptions.push(dayKey);
+        }
+        updateTask({
+          id: baseTask.id,
+          exceptionDates: existingExceptions,
+        });
+      }
+    } else {
+      const deleteSeries = window.confirm(
+        "Delete the entire series of this recurring task?\n\nPress OK to delete the series.\nPress Cancel to keep it."
+      );
+      if (!deleteSeries) return;
+      deleteTask(task.id);
+    }
+  }
+
+  const baseDateISO = qs("datePicker").value;
+  const baseDate = fromISODate(baseDateISO);
+  renderWeekTasks(baseDate);
+  renderMonthDots(baseDate);
+  rescheduleTimer();
 }
 
 export function renderWeekTasks(baseDate) {
@@ -267,7 +310,7 @@ export function renderMonthDots(baseDate) {
   });
 }
 
-function openEditModal(task) {
+function openEditModal(task, instanceDateKey) {
   const modal = qs("taskModal");
 
   // Reset form listeners by cloning/replacing the form node
@@ -279,11 +322,17 @@ function openEditModal(task) {
 
   const deleteBtn = qs("deleteTaskBtn");
   const closeBtn = qs("closeModalBtn");
+  const instanceDateInput = qs("taskInstanceDate");
 
   qs("taskId").value = task.id;
   qs("taskTitle").value = task.title;
+  if (instanceDateInput) {
+    instanceDateInput.value =
+      instanceDateKey || toISODate(new Date(task.startISO));
+  }
   const start = new Date(task.startISO);
-  qs("taskStartDate").value = toISODate(start);
+  const effectiveDateISO = instanceDateKey || toISODate(start);
+  qs("taskStartDate").value = effectiveDateISO;
   const hh = String(start.getHours()).padStart(2, "0");
   const mm = String(start.getMinutes()).padStart(2, "0");
   qs("taskStartTime").value = `${hh}:${mm}`;
@@ -343,13 +392,10 @@ function openEditModal(task) {
     rescheduleTimer();
   }
   function onDelete() {
-    deleteTask(task.id);
+    const instanceDateKey =
+      instanceDateInput ? instanceDateInput.value : "";
+    handleDeleteTask(task, instanceDateKey);
     close();
-    const baseDateISO = qs("datePicker").value;
-    const baseDate = fromISODate(baseDateISO);
-    renderWeekTasks(baseDate);
-    renderMonthDots(baseDate);
-    rescheduleTimer();
   }
   function onClose() {
     close();
@@ -445,7 +491,7 @@ function enableDrag(block, dayColumnEl, task, pxPerMin) {
     // If no movement, treat as tap/click: open details (mobile-friendly)
     if (!moved) {
       block.classList.remove("dragging");
-      openEditModal(task);
+      openEditModal(task, toISODate(new Date(task.startISO)));
       return;
     }
 
