@@ -3,7 +3,7 @@
 
 import { addMinutes } from "./utils.js";
 import { getTasks } from "./storage.js";
-import { say, chime, notify, requestPermissions } from "./audio.js";
+import { say, chime, notify } from "./audio.js";
 
 let scheduled = [];
 let initialized = false;
@@ -190,7 +190,6 @@ export function getNextTaskInfo() {
 export async function initTimer() {
   if (initialized) return;
   initialized = true;
-  await requestPermissions();
   scheduleWarnings();
 }
 

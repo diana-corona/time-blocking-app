@@ -11,6 +11,7 @@ import {
 import { renderWeekTasks, renderMonthDots, wireNewTaskModalHandlers, saveNewTaskFromModal, initTaskControlsDelegation } from "./tasks.js";
 import { initTimer } from "./timer.js";
 import { initTaskProgressView } from "./task-progress.js";
+import { unlockAudio, requestPermissions } from "./audio.js";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -396,10 +397,29 @@ function openTaskModal(initialDate) {
   wireNewTaskModalHandlers();
 }
 
+function initAudioAndNotificationWarmup() {
+  let warmed = false;
+  const handler = () => {
+    if (warmed) return;
+    warmed = true;
+    try {
+      unlockAudio();
+      requestPermissions();
+    } catch {
+      // ignore
+    }
+    document.removeEventListener("click", handler);
+    document.removeEventListener("touchstart", handler);
+  };
+  document.addEventListener("click", handler);
+  document.addEventListener("touchstart", handler);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   registerSW();
   initUI();
   initTaskControlsDelegation();
   initTimer();
   initTaskProgressView();
+  initAudioAndNotificationWarmup();
 });

@@ -32,11 +32,29 @@ function speakText(text) {
 }
 
 let audioCtx;
+let audioUnlocked = false;
+
+export function unlockAudio() {
+  if (audioUnlocked) return;
+  try {
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return;
+    audioCtx = audioCtx || new Ctor();
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume().catch(() => {});
+    }
+    audioUnlocked = true;
+  } catch {
+    // ignore
+  }
+}
+
 /** Simple beep fallback */
 export function beep(durationMs = 500, freq = 880, volume = 0.2) {
   if (isSilent()) return;
   try {
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    unlockAudio();
+    if (!audioCtx || audioCtx.state !== "running") return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = "sine";

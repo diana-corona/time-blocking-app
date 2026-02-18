@@ -81,16 +81,48 @@ export function initTaskControlsDelegation() {
   });
 }
 
+let BASE_HOUR_LINE_HEIGHT = null;
+
+function getBaseHourLineHeight() {
+  if (BASE_HOUR_LINE_HEIGHT !== null) return BASE_HOUR_LINE_HEIGHT;
+  const val = getComputedStyle(document.documentElement)
+    .getPropertyValue("--hour-line-height")
+    .trim();
+  BASE_HOUR_LINE_HEIGHT = Number.parseFloat(val || "52");
+  return BASE_HOUR_LINE_HEIGHT;
+}
+
+function isMobileDailyView() {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(max-width: 480px)").matches
+  );
+}
+
 function getPxPerMinute() {
-  const val = getComputedStyle(document.documentElement).getPropertyValue("--hour-line-height").trim();
+  const val = getComputedStyle(document.documentElement)
+    .getPropertyValue("--hour-line-height")
+    .trim();
   const pxPerHour = Number.parseFloat(val || "52");
   return pxPerHour / 60;
 }
 
 function getDayColumnHeightPx() {
-  const val = getComputedStyle(document.documentElement).getPropertyValue("--hour-line-height").trim();
+  const val = getComputedStyle(document.documentElement)
+    .getPropertyValue("--hour-line-height")
+    .trim();
   const pxPerHour = Number.parseFloat(val || "52");
   return pxPerHour * (PRODUCTIVE_END_HOUR - PRODUCTIVE_START_HOUR);
+}
+
+function adjustHourLineHeightForDensity(baseDate) {
+  const root = document.documentElement;
+  if (!root) return;
+
+  const baseHour = getBaseHourLineHeight();
+  // Keep hour height at the base value; avoid density-based global stretching
+  root.style.setProperty("--hour-line-height", `${baseHour}px`);
 }
 
 function minutesFromMidnight(date) {
@@ -106,7 +138,7 @@ function taskTimeLabel(startDate, durationMin) {
   return `${format12h(startDate)} - ${format12h(end)}`;
 }
 
-function createTaskBlock(task, dayColumnEl, pxPerMin) {
+function createTaskBlock(task, dayColumnEl, pxPerMin, layoutInfo) {
   const start = new Date(task.startISO);
   const totalMinutes = minutesFromMidnight(start);
   const offsetMinutes = totalMinutes - PRODUCTIVE_START_HOUR * 60;
@@ -115,13 +147,33 @@ function createTaskBlock(task, dayColumnEl, pxPerMin) {
     Math.min(offsetMinutes, PRODUCTIVE_SPAN_MIN - task.durationMin)
   );
   const top = clampedOffset * pxPerMin;
-  const height = Math.max(24, task.durationMin * pxPerMin); // min height for touch
+  const height = task.durationMin * pxPerMin;
+
   const block = document.createElement("div");
   block.className = "task-block";
   block.style.top = `${top}px`;
   block.style.height = `${height}px`;
   block.style.background = task.color || "var(--color-accent)";
   block.dataset.id = task.id;
+
+  // If this task shares an hour with others, lay them out side-by-side
+  if (layoutInfo && layoutInfo.total > 1) {
+    const rootStyles = getComputedStyle(document.documentElement);
+    const labelWidth = Number.parseFloat(
+      rootStyles.getPropertyValue("--hour-label-width").trim() || "56"
+    );
+    const gap = Number.parseFloat(
+      rootStyles.getPropertyValue("--space-2").trim() || "8"
+    );
+    const colWidth = dayColumnEl.getBoundingClientRect().width;
+    const usableWidth = Math.max(0, colWidth - labelWidth - gap * 2);
+    const perWidth = usableWidth / layoutInfo.total;
+    const left = labelWidth + gap + perWidth * layoutInfo.index;
+
+    block.style.left = `${left}px`;
+    block.style.width = `${Math.max(0, perWidth - 4)}px`; // small inner gutter
+    block.style.right = "auto";
+  }
 
   const title = document.createElement("div");
   title.className = "task-title";
@@ -141,6 +193,8 @@ function createTaskBlock(task, dayColumnEl, pxPerMin) {
 }
 
 export function renderWeekTasks(baseDate) {
+  adjustHourLineHeightForDensity(baseDate);
+
   const pxPerMin = getPxPerMinute();
   const container = qs("weekView");
   if (!container) return;
@@ -152,8 +206,32 @@ export function renderWeekTasks(baseDate) {
     if (!tasksLayer) return;
     tasksLayer.innerHTML = "";
     const tasks = tasksOnDay(day);
+
+    // Group tasks by start hour to detect overlaps within the same hour
+    const byHour = new Map();
     tasks.forEach((t) => {
-      const block = createTaskBlock(t, col, pxPerMin);
+      const s = new Date(t.startISO);
+      const h = s.getHours();
+      if (!byHour.has(h)) byHour.set(h, []);
+      byHour.get(h).push(t);
+    });
+
+    // Build layout info per task id: index and total in that hour
+    const layoutById = new Map();
+    byHour.forEach((arr) => {
+      if (arr.length <= 1) return;
+      // stable order within the hour by start time
+      arr.sort(
+        (a, b) => new Date(a.startISO).getTime() - new Date(b.startISO).getTime()
+      );
+      arr.forEach((t, idx) => {
+        layoutById.set(t.id, { index: idx, total: arr.length });
+      });
+    });
+
+    tasks.forEach((t) => {
+      const layoutInfo = layoutById.get(t.id) || null;
+      const block = createTaskBlock(t, col, pxPerMin, layoutInfo);
       tasksLayer.appendChild(block);
     });
   });
