@@ -35,38 +35,60 @@ let audioCtx;
 let audioUnlocked = false;
 
 export function unlockAudio() {
-  if (audioUnlocked) return;
   try {
     const Ctor = window.AudioContext || window.webkitAudioContext;
     if (!Ctor) return;
     audioCtx = audioCtx || new Ctor();
-    if (audioCtx.state === "suspended") {
+
+    // On mobile (including Android Chrome), AudioContext may start or return to "suspended"
+    // after tab visibility changes. Always try to resume so beeps can work again.
+    if (audioCtx.state === "suspended" || audioCtx.state === "interrupted") {
       audioCtx.resume().catch(() => {});
     }
-    audioUnlocked = true;
+
+    audioUnlocked = audioCtx.state === "running";
   } catch {
     // ignore
   }
 }
 
 /** Simple beep fallback */
+function playTone(ctx, durationMs, freq, volume) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = freq;
+  gain.gain.value = volume;
+  osc.connect(gain).connect(ctx.destination);
+  osc.start();
+  setTimeout(() => {
+    osc.stop();
+    osc.disconnect();
+    gain.disconnect();
+  }, durationMs);
+}
+
 export function beep(durationMs = 500, freq = 880, volume = 0.2) {
   if (isSilent()) return;
   try {
     unlockAudio();
-    if (!audioCtx || audioCtx.state !== "running") return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = "sine";
-    osc.frequency.value = freq;
-    gain.gain.value = volume;
-    osc.connect(gain).connect(audioCtx.destination);
-    osc.start();
-    setTimeout(() => {
-      osc.stop();
-      osc.disconnect();
-      gain.disconnect();
-    }, durationMs);
+    if (!audioCtx) return;
+
+    if (audioCtx.state !== "running") {
+      // Best-effort resume for mobile browsers (including Android Chrome) that
+      // may suspend the context when the tab/app goes to the background.
+      audioCtx
+        .resume()
+        .then(() => {
+          if (audioCtx && audioCtx.state === "running") {
+            playTone(audioCtx, durationMs, freq, volume);
+          }
+        })
+        .catch(() => {});
+      return;
+    }
+
+    playTone(audioCtx, durationMs, freq, volume);
   } catch {
     // no-op
   }

@@ -399,20 +399,42 @@ function openTaskModal(initialDate) {
 
 function initAudioAndNotificationWarmup() {
   let warmed = false;
-  const handler = () => {
-    if (warmed) return;
-    warmed = true;
+
+  const warm = () => {
     try {
       unlockAudio();
       requestPermissions();
     } catch {
       // ignore
     }
-    document.removeEventListener("click", handler);
-    document.removeEventListener("touchstart", handler);
   };
-  document.addEventListener("click", handler);
-  document.addEventListener("touchstart", handler);
+
+  const gestureHandler = () => {
+    if (warmed) return;
+    warmed = true;
+    warm();
+
+    // Clean up gesture listeners once we've successfully warmed
+    document.removeEventListener("click", gestureHandler);
+    document.removeEventListener("touchstart", gestureHandler);
+    document.removeEventListener("pointerdown", gestureHandler);
+    document.removeEventListener("keydown", gestureHandler);
+  };
+
+  // Capture a broad set of gestures so Android Chrome reliably considers this
+  // a "user activation" for audio + notification permission prompts.
+  document.addEventListener("click", gestureHandler, { passive: true });
+  document.addEventListener("touchstart", gestureHandler, { passive: true });
+  document.addEventListener("pointerdown", gestureHandler, { passive: true });
+  document.addEventListener("keydown", gestureHandler, { passive: true });
+
+  // When returning from background, some mobile browsers suspend audio.
+  // Re-warm the AudioContext when the page becomes visible again.
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      warm();
+    }
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
